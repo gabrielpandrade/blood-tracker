@@ -3,24 +3,42 @@
 /** biome-ignore-all lint/a11y/useButtonType: _ */
 "use client";
 
-import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Loading from "@/components/loading";
+import { getLastGlucose } from "@/db/actions/get-last-glucose";
+import { getLastPressure } from "@/db/actions/get-last-pressure";
+import { useSession } from "@/lib/auth-client";
+import type { Glucose } from "@/types/glucose";
+import type { Pressure } from "@/types/pressure";
 
 export default function HomePage() {
   const router = useRouter();
-  const [userName, setUserName] = useState("");
   const [greeting, setGreeting] = useState("");
+  const [lastGlucose, setLastGlucose] = useState<Glucose | undefined>(
+    undefined,
+  );
+  const [lastPressure, setLastPressure] = useState<Pressure | undefined>(
+    undefined,
+  );
+
+  const { data, isPending } = useSession();
 
   useEffect(() => {
-    const user = useSession
-    // Exemplo: const user = await getUser();
-    setUserName("João"); 
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Bom dia");
     else if (hour < 18) setGreeting("Boa tarde");
     else setGreeting("Boa noite");
   }, []);
+
+  useEffect(() => {
+    if (data?.user.id) {
+      getLastGlucose({ userId: data.user.id }).then(setLastGlucose);
+      getLastPressure({ userId: data.user.id }).then(setLastPressure);
+    }
+  }, [data?.user.id]);
+
+  if (isPending) return <Loading />;
 
   const actions = [
     {
@@ -141,14 +159,13 @@ export default function HomePage() {
               <h1 className="text-3xl font-bold text-white mb-1">
                 {greeting},{" "}
                 <span className="bg-linear-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
-                  {userName}
+                  {data?.user.name}
                 </span>
               </h1>
-              <p className="text-zinc-400 text-sm">Como está sua saúde hoje?</p>
             </div>
 
             {/* Profile icon */}
-            <button
+            {/* <button
               onClick={() => router.push("/profile")}
               className="w-12 h-12 rounded-full bg-linear-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all duration-300 hover:scale-105 active:scale-95"
             >
@@ -165,11 +182,11 @@ export default function HomePage() {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-            </button>
+            </button> */}
           </div>
 
           {/* Quick stats card */}
-          <div className="mt-6 bg-zinc-900/60 backdrop-blur-xl border border-red-900/20 rounded-2xl p-5 animate-slide-up">
+          {/* <div className="mt-6 bg-zinc-900/60 backdrop-blur-xl border border-red-900/20 rounded-2xl p-5 animate-slide-up">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-zinc-400 text-xs font-medium mb-1">
@@ -193,7 +210,7 @@ export default function HomePage() {
                 </svg>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Action cards */}
@@ -253,31 +270,65 @@ export default function HomePage() {
             Atividade Recente
           </h2>
           <div className="bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/50 rounded-2xl p-5">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <div className="flex-1">
-                <p className="text-white text-sm font-medium">
-                  Glicemia - 98 mg/dL
-                </p>
-                <p className="text-zinc-500 text-xs">Hoje às 14:30</p>
+            {lastGlucose ? (
+              <div className="flex items-center gap-4 mb-4">
+                <div
+                  className={`w-2 h-2 rounded-full animate-pulse ${lastGlucose.glucose > 140 ? "bg-red-500" : "bg-green-500"}`}
+                />
+                <div className="flex-1">
+                  <p className="text-white text-sm font-medium">
+                    Glicemia - {lastGlucose.glucose} mg/dL
+                  </p>
+                  <p className="text-zinc-500 text-xs">
+                    {new Date(lastGlucose.timestamp).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <span
+                  className={`text-xs font-semibold px-2 py-1 rounded-lg ${
+                    lastGlucose.glucose > 140
+                      ? "bg-red-500/10 text-red-400"
+                      : "bg-green-500/10 text-green-400"
+                  }`}
+                >
+                  {lastGlucose.glucose > 140 ? "Alterada" : "Normal"}
+                </span>
               </div>
-              <span className="text-green-400 text-xs font-semibold px-2 py-1 bg-green-500/10 rounded-lg">
-                Normal
-              </span>
-            </div>
+            ) : (
+              <p className="text-zinc-500 text-xs mb-4">
+                Nenhum registro de glicemia encontrado.
+              </p>
+            )}
 
-            <div className="flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <div className="flex-1">
-                <p className="text-white text-sm font-medium">
-                  PA - 120/80 mmHg
-                </p>
-                <p className="text-zinc-500 text-xs">Hoje às 09:15</p>
+            {lastPressure ? (
+              <div className="flex items-center gap-4">
+                <div
+                  className={`w-2 h-2 rounded-full ${lastPressure.systolic >= 140 || lastPressure.diastolic >= 90 ? "bg-red-500" : "bg-blue-500"}`}
+                />
+                <div className="flex-1">
+                  <p className="text-white text-sm font-medium">
+                    PA - {lastPressure.systolic}/{lastPressure.diastolic} mmHg
+                  </p>
+                  <p className="text-zinc-500 text-xs">
+                    {new Date(lastPressure.timestamp).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <span
+                  className={`text-xs font-semibold px-2 py-1 rounded-lg ${
+                    lastPressure.systolic >= 140 || lastPressure.diastolic >= 90
+                      ? "bg-red-500/10 text-red-400"
+                      : "bg-blue-500/10 text-blue-400"
+                  }`}
+                >
+                  {lastPressure.systolic >= 140 || lastPressure.diastolic >= 90
+                    ? "Elevada"
+                    : "Normal"}
+                </span>
               </div>
-              <span className="text-blue-400 text-xs font-semibold px-2 py-1 bg-blue-500/10 rounded-lg">
-                Normal
-              </span>
-            </div>
+            ) : (
+              <p className="text-zinc-500 text-xs">
+                Nenhum registro de PA encontrado.
+              </p>
+            )}
           </div>
         </div>
       </div>
