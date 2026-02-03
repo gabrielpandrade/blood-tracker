@@ -3,6 +3,8 @@
 /** biome-ignore-all lint/a11y/useButtonType: _ */
 "use client";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { redirect, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -48,9 +50,51 @@ const exportToPDF = async (
   glucoseData: GlucoseRecord[],
   pressureData: PressureRecord[],
 ) => {
-  // Mock - aqui você implementaria a geração real do PDF
-  console.log("Exportando para PDF:", { glucoseData, pressureData });
-  alert("Funcionalidade de exportação PDF será implementada");
+  const doc = new jsPDF();
+
+  // Título
+  doc.setFontSize(18);
+  doc.text("Relatório de Saúde - Blood Tracker", 14, 20);
+  doc.setFontSize(12);
+  doc.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")}`, 14, 30);
+
+  // Tabela de Glicemia
+  doc.setFontSize(14);
+  doc.text("Registros de Glicemia", 14, 45);
+
+  const glucoseRows = glucoseData.map((g) => [
+    new Date(g.timestamp).toLocaleString("pt-BR"),
+    `${g.glucose} mg/dL`,
+    g.glucose < 70 ? "Baixa" : g.glucose > 140 ? "Alta" : "Normal",
+  ]);
+
+  autoTable(doc, {
+    startY: 50,
+    head: [["Data/Hora", "Valor", "Status"]],
+    body: glucoseRows,
+  });
+
+  // Pega a posição Y final da tabela anterior
+  // @ts-expect-error (o typescript pode reclamar da propriedade lastAutoTable)
+  const finalY = doc.lastAutoTable.finalY || 50;
+
+  // Tabela de Pressão
+  doc.text("Registros de Pressão Arterial", 14, finalY + 15);
+
+  const pressureRows = pressureData.map((p) => [
+    new Date(p.timestamp).toLocaleString("pt-BR"),
+    `${p.systolic}/${p.diastolic} mmHg`,
+    p.systolic >= 140 || p.diastolic >= 90 ? "Elevada" : "Normal",
+  ]);
+
+  autoTable(doc, {
+    startY: finalY + 20,
+    head: [["Data/Hora", "Medição", "Status"]],
+    body: pressureRows,
+  });
+
+  // Salvar o arquivo
+  doc.save("relatorio-saude.pdf");
 };
 
 export default function ReportPage() {
@@ -76,9 +120,25 @@ export default function ReportPage() {
   const loadInitialData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // Garante que pega até o último minuto do dia final
+      let start: Date;
+      let end: Date;
+
+      // Se houver datas selecionadas no filtro, usa elas
+      if (startDate && endDate) {
+        start = new Date(startDate);
+        end = new Date(endDate);
+      } else {
+        // CASO CONTRÁRIO: Define um padrão (ex: últimos 30 dias)
+        const now = new Date();
+        end = new Date(now);
+        start = new Date(now);
+        start.setDate(now.getDate() - 30);
+      }
+
+      // Ajusta o final do dia para pegar todos os registros até 23:59
+      end.setHours(23, 59, 59, 999);
+      // Ajusta o inicio do dia para 00:00 (opcional, mas recomendado)
+      start.setHours(0, 0, 0, 0);
 
       const [glucose, pressure] = await Promise.all([
         handleGetGlucose(userId, start, end),
