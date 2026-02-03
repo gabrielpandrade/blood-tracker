@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signUp } from "@/lib/auth-client";
+import { redirect } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -61,6 +62,7 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
       });
+      redirect("/");
       // biome-ignore lint/suspicious/noExplicitAny: _
     } catch (err: any) {
       setError(err?.message || "Erro ao criar conta. Tente novamente.");
