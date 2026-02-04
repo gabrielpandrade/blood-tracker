@@ -24,3 +24,29 @@ export async function fetchLatestGlucose(): Promise<Glucose | null> {
 
   return data[0] ?? null;
 }
+
+interface RegisterGlucoseInput {
+  glucose: number;
+  timestamp?: Date;
+}
+
+export async function registerGlucose(
+  input: RegisterGlucoseInput,
+): Promise<void> {
+  const res = await fetch("/api/glucose", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      glucose: input.glucose,
+      timestamp: input.timestamp?.toISOString(),
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error ?? "Erro ao registrar glicemia");
+  }
+}

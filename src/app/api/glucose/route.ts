@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getGlucoseData } from "@/db/actions/glucose";
+import { getGlucoseData, registerGlucose } from "@/db/actions/glucose";
 import { auth } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -35,4 +35,35 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json(result);
+}
+
+export async function POST(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { glucose, timestamp } = body;
+
+  if (typeof glucose !== "number") {
+    return NextResponse.json(
+      { error: "glucose deve ser um número" },
+      { status: 400 },
+    );
+  }
+
+  await registerGlucose({
+    userId: session.user.id,
+    glucose,
+    timestamp: timestamp ? new Date(timestamp) : new Date(),
+  });
+
+  return NextResponse.json(
+    { success: true },
+    { status: 201 },
+  );
 }

@@ -1,5 +1,6 @@
 import type { Glucose } from "@/types/glucose";
 import { db } from "../client";
+import { glucose } from "../schema";
 
 interface GetGlucoseParams {
   userId: string;
@@ -61,4 +62,22 @@ export async function getGlucoseData({
       nextCursor,
     },
   };
+}
+
+type RegisterGlucoseInput = {
+  userId: string;
+  timestamp: Date;
+  glucose: number;
+};
+
+export async function registerGlucose({
+  userId,
+  timestamp,
+  glucose: glucoseValue,
+}: RegisterGlucoseInput) {
+  await db.insert(glucose).values({
+    userId,
+    timestamp,
+    glucose: glucoseValue,
+  });
 }
