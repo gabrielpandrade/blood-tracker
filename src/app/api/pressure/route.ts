@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getPressureData } from "@/db/actions/pressure";
+import { getPressureData, registerPressure } from "@/db/actions/pressure";
 import { auth } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  
+
   const userId = session.user.id;
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
@@ -35,4 +35,33 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json(result);
+}
+
+export async function POST(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { systolic, diastolic, timestamp } = body;
+
+  if (typeof systolic !== "number" || typeof diastolic !== "number") {
+    return NextResponse.json(
+      { error: "systolic e diastolic devem ser números" },
+      { status: 400 },
+    );
+  }
+
+  await registerPressure({
+    userId: session.user.id,
+    systolic,
+    diastolic,
+    timestamp: timestamp ? new Date(timestamp) : new Date(),
+  });
+
+  return NextResponse.json({ success: true }, { status: 201 });
 }

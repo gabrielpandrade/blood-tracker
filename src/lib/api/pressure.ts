@@ -24,3 +24,31 @@ export async function fetchLatestPressure(): Promise<Pressure | null> {
 
   return data[0] ?? null;
 }
+
+interface RegisterPressureInput {
+  systolic: number;
+  diastolic: number;
+  timestamp?: Date;
+}
+
+export async function registerPressure(
+  input: RegisterPressureInput,
+): Promise<void> {
+  const res = await fetch("/api/pressure", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      systolic: input.systolic,
+      diastolic: input.diastolic,
+      timestamp: input.timestamp?.toISOString(),
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error ?? "Erro ao registrar pressão");
+  }
+}

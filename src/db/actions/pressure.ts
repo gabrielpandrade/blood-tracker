@@ -1,5 +1,6 @@
 import type { Pressure } from "@/types/pressure";
 import { db } from "../client";
+import { pressure } from "../schema";
 
 interface GetPressureParams {
   userId: string;
@@ -62,3 +63,25 @@ export async function getPressureData({
     },
   };
 }
+
+interface RegisterPressureInput {
+  userId: string;
+  timestamp: Date;
+  systolic: number;
+  diastolic: number;
+}
+
+export async function registerPressure({
+  userId,
+  timestamp,
+  systolic,
+  diastolic,
+}: RegisterPressureInput) {
+  await db.insert(pressure).values({
+    userId,
+    timestamp,
+    systolic,
+    diastolic,
+  });
+}
+
