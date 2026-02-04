@@ -11,6 +11,17 @@ interface GetLatestGlucoseResponse {
   };
 }
 
+export type GetGlucoseResponse = {
+  data: Glucose[];
+  pageInfo: {
+    hasNextPage: boolean;
+    nextCursor: {
+      timestamp: Date;
+      id: number;
+    } | null;
+  };
+}
+
 export async function fetchLatestGlucose(): Promise<Glucose | null> {
   const res = await fetch("/api/glucose?pageSize=1", {
     credentials: "include",
@@ -50,3 +61,53 @@ export async function registerGlucose(
     throw new Error(body?.error ?? "Erro ao registrar glicemia");
   }
 }
+
+interface FetchGlucoseParams {
+  pageSize: number;
+  startDate?: Date;
+  endDate?: Date;
+  cursor?: {
+    timestamp: Date;
+    id: number;
+  };
+}
+
+export async function fetchGlucose(
+  params: FetchGlucoseParams,
+): Promise<GetLatestGlucoseResponse> {
+  const searchParams = new URLSearchParams();
+
+  // obrigatório
+  searchParams.set("pageSize", params.pageSize.toString());
+
+  // opcionais
+  if (params.startDate) {
+    searchParams.set("startDate", params.startDate.toISOString());
+  }
+
+  if (params.endDate) {
+    searchParams.set("endDate", params.endDate.toISOString());
+  }
+
+  if (params.cursor) {
+    searchParams.set(
+      "cursor",
+      JSON.stringify({
+        timestamp: params.cursor.timestamp.toISOString(),
+        id: params.cursor.id,
+      }),
+    );
+  }
+
+  const res = await fetch(`/api/glucose?${searchParams.toString()}`, {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error ?? "Erro ao buscar glicemia");
+  }
+
+  return res.json();
+}
+

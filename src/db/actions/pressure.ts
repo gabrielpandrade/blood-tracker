@@ -33,7 +33,10 @@ export async function getPressureData({
 
   const rows = await db.query.pressure.findMany({
     limit,
-    orderBy: (pressure, { desc }) => [desc(pressure.timestamp), desc(pressure.id)],
+    orderBy: (pressure, { desc }) => [
+      desc(pressure.timestamp),
+      desc(pressure.id),
+    ],
     where: (pressure, { and, eq, gte, lte, lt }) =>
       and(
         eq(pressure.userId, userId),
@@ -84,4 +87,3 @@ export async function registerPressure({
     diastolic,
   });
 }
-
