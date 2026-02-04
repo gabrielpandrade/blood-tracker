@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signUp } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -42,6 +42,8 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const router = useRouter();
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -62,7 +64,7 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
       });
-      redirect("/");
+      router.push("/");
       // biome-ignore lint/suspicious/noExplicitAny: _
     } catch (err: any) {
       setError(err?.message || "Erro ao criar conta. Tente novamente.");

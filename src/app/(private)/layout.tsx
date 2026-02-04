@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { QueryProvider } from "./query-provider";
 
 export default async function Layout({
   children,
@@ -13,5 +14,7 @@ export default async function Layout({
 
   if (!session) redirect("/login");
 
-  return <h1>{children}</h1>;
+  return (
+    <QueryProvider>{children}</QueryProvider>
+  );
 }
