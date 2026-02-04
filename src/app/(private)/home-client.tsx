@@ -3,11 +3,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { BarChart3, ChevronRight, Heart, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchLatestGlucose } from "@/lib/api/glucose";
+import { fetchLatestPressure } from "@/lib/api/pressure";
 import type { Glucose } from "@/types/glucose";
 import type { Pressure } from "@/types/pressure";
 
@@ -16,15 +16,14 @@ interface HomeClientProps {
     name?: string | null;
   };
   initialLastGlucose?: Glucose | null;
-  lastPressure?: Pressure;
+  initialLastPressure?: Pressure | null;
 }
 
 export default function HomeClient({
   user,
   initialLastGlucose,
-  lastPressure,
+  initialLastPressure,
 }: HomeClientProps) {
-  const router = useRouter();
   const [greeting, setGreeting] = useState("");
 
   useEffect(() => {
@@ -38,6 +37,13 @@ export default function HomeClient({
     queryKey: ["glucose", "latest"],
     queryFn: fetchLatestGlucose,
     initialData: initialLastGlucose ?? null,
+    staleTime: 1000 * 30,
+  });
+
+  const { data: lastPressure } = useQuery({
+    queryKey: ["pressure", "latest"],
+    queryFn: fetchLatestPressure,
+    initialData: initialLastPressure ?? null,
     staleTime: 1000 * 30,
   });
 
@@ -126,27 +132,26 @@ export default function HomeClient({
             const Icon = action.icon;
 
             return (
-              <Card
-                key={action.id}
-                tabIndex={0}
-                onClick={() => router.push(action.href)}
-                className={`
-                  cursor-pointer
-                  bg-zinc-900/60 backdrop-blur-xl
-                  border ${action.border} ${action.hoverBorder}
-                  rounded-2xl
-                  shadow-lg ${action.shadow} ${action.hoverShadow}
-                  transition-all duration-300
-                  hover:scale-[1.02]
-                  active:scale-[0.98]
-                  group
-                  animate-slide-up
-                `}
-                style={{ animationDelay: `${0.1 + index * 0.1}s` }}
-              >
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div
-                    className={`
+              <Link key={action.id} href={action.href} className="block">
+                <Card
+                  tabIndex={0}
+                  className={`
+                    cursor-pointer
+                    bg-zinc-900/60 backdrop-blur-xl
+                    border ${action.border} ${action.hoverBorder}
+                    rounded-2xl
+                    shadow-lg ${action.shadow} ${action.hoverShadow}
+                    transition-all duration-300
+                    hover:scale-[1.02]
+                    active:scale-[0.98]
+                    group
+                    animate-slide-up
+                    `}
+                  style={{ animationDelay: `${0.1 + index * 0.1}s` }}
+                >
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div
+                      className={`
                       w-16 h-16 rounded-2xl
                       bg-linear-to-br ${action.gradient}
                       border ${action.border}
@@ -155,22 +160,23 @@ export default function HomeClient({
                       group-hover:scale-110
                       transition-transform duration-300
                     `}
-                  >
-                    <Icon className="w-8 h-8" />
-                  </div>
+                    >
+                      <Icon className="w-8 h-8" />
+                    </div>
 
-                  <div className="flex-1 text-left">
-                    <h3 className="text-white text-lg font-semibold mb-1 group-hover:text-red-300 transition-colors duration-300">
-                      {action.title}
-                    </h3>
-                    <p className="text-zinc-400 text-sm">
-                      {action.description}
-                    </p>
-                  </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-white text-lg font-semibold mb-1 group-hover:text-red-300 transition-colors duration-300">
+                        {action.title}
+                      </h3>
+                      <p className="text-zinc-400 text-sm">
+                        {action.description}
+                      </p>
+                    </div>
 
-                  <ChevronRight className="w-6 h-6 text-zinc-500 group-hover:text-red-400 group-hover:translate-x-1 transition-all duration-300" />
-                </CardContent>
-              </Card>
+                    <ChevronRight className="w-6 h-6 text-zinc-500 group-hover:text-red-400 group-hover:translate-x-1 transition-all duration-300" />
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>
