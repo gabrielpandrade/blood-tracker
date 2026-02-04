@@ -17,10 +17,6 @@ export default async function RegisterPressurePage() {
     redirect("/");
   }
 
-  const now = new Date();
-  const currentDate = now.toISOString().split("T")[0];
-  const currentTime = now.toTimeString().slice(0, 5);
-
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#0a0a0a]">
       {/* Animated background */}
@@ -72,10 +68,7 @@ export default async function RegisterPressurePage() {
         {/* Form */}
         <div className="px-6 pb-8">
           <div className="bg-zinc-900/60 backdrop-blur-xl border border-pink-900/30 rounded-2xl p-6 shadow-2xl animate-slide-up">
-            <RegisterPressureForm
-              defaultDate={currentDate}
-              defaultTime={currentTime}
-            />
+            <RegisterPressureForm />
           </div>
         </div>
       </div>

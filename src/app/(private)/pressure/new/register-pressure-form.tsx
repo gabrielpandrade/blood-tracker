@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,24 +18,17 @@ import { Input } from "@/components/ui/input";
 import { registerPressure } from "@/lib/api/pressure";
 import { type FormData, formSchema } from "./pressure-schema";
 
-interface Props {
-  defaultDate: string;
-  defaultTime: string;
-}
-
-export default function RegisterPressureForm({
-  defaultDate,
-  defaultTime,
-}: Props) {
+export default function RegisterPressureForm() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: defaultDate,
-      time: defaultTime,
+      date: "",
+      time: "",
       systolic: "",
       diastolic: "",
     },
@@ -86,6 +79,25 @@ export default function RegisterPressureForm({
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+      const now = new Date();
+      
+      // Formata para o padrão que o <input /> aceita (YYYY-MM-DD e HH:mm)
+      const datePart = now.toLocaleDateString('sv-SE'); // 'sv-SE' gera YYYY-MM-DD
+      const timePart = now.toTimeString().slice(0, 5);
+  
+      form.reset({
+        date: datePart,
+        time: timePart,
+        diastolic: "",
+        systolic: "",
+      });
+      
+      setMounted(true);
+    }, [form]);
+  
+    if (!mounted) return <div className="h-64 animate-pulse bg-zinc-900/20 rounded-2xl" />;
 
   return (
     <Form {...form}>

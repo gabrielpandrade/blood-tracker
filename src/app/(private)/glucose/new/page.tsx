@@ -17,10 +17,6 @@ export default async function RegisterGlucosePage() {
     redirect("/");
   }
 
-  const now = new Date();
-  const currentDate = now.toISOString().split("T")[0];
-  const currentTime = now.toTimeString().slice(0, 5);
-
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#0a0a0a]">
       {/* Background */}
@@ -74,10 +70,7 @@ export default async function RegisterGlucosePage() {
         {/* Form */}
         <div className="px-6 pb-8">
           <div className="bg-zinc-900/60 backdrop-blur-xl border border-red-900/30 rounded-2xl p-6 shadow-2xl animate-slide-up">
-            <RegisterGlucoseForm
-              defaultDate={currentDate}
-              defaultTime={currentTime}
-            />
+            <RegisterGlucoseForm />
           </div>
         </div>
       </div>
