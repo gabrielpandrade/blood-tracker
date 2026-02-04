@@ -1,19 +1,22 @@
 /** biome-ignore-all lint/suspicious/noArrayIndexKey: _ */
+"use client";
 
 import { ChevronLeftIcon } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
+import { useSession } from "@/lib/auth-client";
 import RegisterPressureForm from "./register-pressure-form";
+import Loading from "@/components/loading";
 
-export default async function RegisterPressurePage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export default function RegisterPressurePage() {
+  const { data, isPending } = useSession();
 
-  if (!session?.user) {
+  if (isPending) {
+    return <Loading />;
+  }
+
+  if (!data?.user) {
     redirect("/");
   }
 

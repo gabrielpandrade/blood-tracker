@@ -3,7 +3,7 @@ import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 export const glucose = pgTable("glucose", {
-  id: integer("id").generatedAlwaysAsIdentity(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   timestamp: timestamp("timestamp").notNull(),
   glucose: integer("glucose").notNull(),
   userId: text("user_id")

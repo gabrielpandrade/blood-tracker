@@ -1,14 +1,18 @@
-import { headers } from "next/headers";
+"use client";
+
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import Loading from "@/components/loading";
+import { useSession } from "@/lib/auth-client";
 import ReportClient from "./report-client";
 
-export default async function ReportPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export default function ReportPage() {
+  const { data, isPending } = useSession();
 
-  if (!session?.user) {
+  if (isPending) {
+    return <Loading />;
+  }
+
+  if (!data?.user) {
     redirect("/");
   }
 

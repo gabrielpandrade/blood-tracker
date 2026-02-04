@@ -1,19 +1,22 @@
-/** biome-ignore-all lint/suspicious/noArrayIndexKey: _*/
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: _ */
+"use client";
 
-import { headers } from "next/headers";
+import { ChevronLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import Loading from "@/components/loading";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
+import { useSession } from "@/lib/auth-client";
 import RegisterGlucoseForm from "./register-glucose-form";
-import { ChevronLeftIcon } from "lucide-react";
 
-export default async function RegisterGlucosePage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export default function Page() {
+  const { data, isPending } = useSession();
 
-  if (!session?.user) {
+  if (isPending) {
+    return <Loading />;
+  }
+
+  if (!data?.user) {
     redirect("/");
   }
 
